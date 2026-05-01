@@ -8,8 +8,8 @@ const WIDTH = 1080;
 const HEIGHT = 720;
 
 const PLAYER_SIZE: v2 = v2.init(20, 70);
-const PLAYER_1_START_POS: v2 = v2.init(WIDTH / 5 - (PLAYER_SIZE.x / 2), HEIGHT / 2 - (PLAYER_SIZE.y / 2));
-const PLAYER_2_START_POS: v2 = v2.init(4 * WIDTH / 5 - (PLAYER_SIZE.x / 2), HEIGHT / 2 - (PLAYER_SIZE.y / 2));
+const PLAYER_1_START_POS: v2 = v2.init(WIDTH / 6 - (PLAYER_SIZE.x / 2), HEIGHT / 2 - (PLAYER_SIZE.y / 2));
+const PLAYER_2_START_POS: v2 = v2.init(5 * WIDTH / 6 - (PLAYER_SIZE.x / 2), HEIGHT / 2 - (PLAYER_SIZE.y / 2));
 
 const BALL_START_POS: v2 = v2.init(WIDTH / 2, HEIGHT / 2);
 const BALL_SIZE = 10;
