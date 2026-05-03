@@ -1,6 +1,7 @@
 const std = @import("std");
 const print = std.debug.print;
 const math = std.math;
+const rand = std.Random;
 const rl = @import("raylib");
 const v2 = rl.Vector2;
 const Key = rl.KeyboardKey;
@@ -19,6 +20,7 @@ const PLAYER_2_START_POS: v2 = v2.init(
     5 * WIDTH / 6 - (PLAYER_SIZE.x / 2),
     HEIGHT / 2 - (PLAYER_SIZE.y / 2),
 );
+const PLAYER_VEL: f32 = 5;
 
 //ball
 const BALL_START_POS: v2 = v2.init(WIDTH / 2, HEIGHT / 2);
@@ -36,8 +38,8 @@ const Player = struct {
         key_down: Key,
     };
 
-    const UP: v2 = v2.init(0, -1);
-    const DOWN: v2 = v2.init(0, 1);
+    const UP: v2 = v2.init(0, -PLAYER_VEL);
+    const DOWN: v2 = v2.init(0, PLAYER_VEL);
 
     fn draw(self: Player) void {
         rl.drawRectangleV(
@@ -53,7 +55,7 @@ const Player = struct {
             self.pos = v2.add(self.pos, Player.UP);
         } else if (rl.isKeyDown(self.keys.key_down)) {
             //print("key down pressed: {any}\n", .{self.keys.key_down});
-            self.pos = v2.add(self.pos, self.vel);
+            self.pos = v2.add(self.pos, Player.DOWN);
         } else return;
     }
 };
@@ -70,6 +72,10 @@ const Ball = struct {
             self.size,
             self.color,
         );
+    }
+
+    fn update(self: *Ball) void {
+        self.pos = v2.add(self.pos, self.vel);
     }
 };
 
@@ -105,6 +111,7 @@ const Game = struct {
         for (&self.players) |*player| {
             player.update();
         }
+        self.ball.update();
     }
 
     fn render(self: Game) void {
