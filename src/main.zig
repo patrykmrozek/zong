@@ -23,7 +23,7 @@ const PLAYER_VEL: f32 = 7.5;
 
 //ball
 const BALL_START_POS: v2 = v2.init(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-const BALL_SIZE = 10;
+const BALL_RAD = 10;
 const BALL_VEL: f32 = 6.5;
 
 const Player = struct {
@@ -71,19 +71,37 @@ const Player = struct {
 
 const Ball = struct {
     pos: v2 = BALL_START_POS,
-    size: f32 = BALL_SIZE,
-    vel: v2 = v2.init(BALL_VEL, 0),
+    rad: f32 = BALL_RAD,
+    vel: v2 = v2.init(1, -BALL_VEL),
     color: rl.Color = .black,
 
     fn draw(self: Ball) void {
         rl.drawCircleV(
             self.pos,
-            self.size,
+            self.rad,
             self.color,
         );
     }
 
+    fn bounce(self: *Ball, normal: v2) void {
+        const u = v2.scale(
+            normal,
+            (v2.dotProduct(self.vel, normal) / v2.dotProduct(normal, normal)),
+        );
+        const w = v2.subtract(self.vel, u);
+        self.vel = v2.subtract(w, u);
+    }
+
     fn update(self: *Ball) void {
+        if (self.pos.y < self.rad) {
+            self.bounce(v2.init(0, 1));
+        } else if (self.pos.y > SCREEN_HEIGHT - self.rad) {
+            self.bounce(v2.init(0, -1));
+        } else if (self.pos.x > SCREEN_WIDTH) {
+            print("Player 1 scores\n", .{});
+        } else {
+            print("Player 2 scores\n", .{});
+        }
         self.pos = v2.add(self.pos, self.vel);
     }
 };
