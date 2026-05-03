@@ -1,35 +1,34 @@
 const std = @import("std");
 const print = std.debug.print;
 const math = std.math;
-const rand = std.Random;
 const rl = @import("raylib");
 const v2 = rl.Vector2;
 const Key = rl.KeyboardKey;
 
 //screen
-const WIDTH = 1080;
-const HEIGHT = 720;
+const SCREEN_WIDTH = 1080;
+const SCREEN_HEIGHT = 720;
 
 //player
 const PLAYER_SIZE: v2 = v2.init(20, 70);
 const PLAYER_1_START_POS: v2 = v2.init(
-    WIDTH / 6 - (PLAYER_SIZE.x / 2),
-    HEIGHT / 2 - (PLAYER_SIZE.y / 2),
+    SCREEN_WIDTH / 6 - (PLAYER_SIZE.x / 2),
+    SCREEN_HEIGHT / 2 - (PLAYER_SIZE.y / 2),
 );
 const PLAYER_2_START_POS: v2 = v2.init(
-    5 * WIDTH / 6 - (PLAYER_SIZE.x / 2),
-    HEIGHT / 2 - (PLAYER_SIZE.y / 2),
+    5 * SCREEN_WIDTH / 6 - (PLAYER_SIZE.x / 2),
+    SCREEN_HEIGHT / 2 - (PLAYER_SIZE.y / 2),
 );
-const PLAYER_VEL: f32 = 5;
+const PLAYER_VEL: f32 = 7.5;
 
 //ball
-const BALL_START_POS: v2 = v2.init(WIDTH / 2, HEIGHT / 2);
+const BALL_START_POS: v2 = v2.init(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 const BALL_SIZE = 10;
+const BALL_VEL: f32 = 6.5;
 
 const Player = struct {
     pos: v2,
     size: v2 = PLAYER_SIZE,
-    vel: v2 = v2.zero(),
     color: rl.Color = .black,
     keys: Keys,
 
@@ -51,11 +50,21 @@ const Player = struct {
 
     fn update(self: *Player) void {
         if (rl.isKeyDown(self.keys.key_up)) {
+            print("[UP] player pos: {any}\n", .{self.pos});
             //print("key up pressed: {any}\n", .{self.keys.key_up});
-            self.pos = v2.add(self.pos, Player.UP);
+            if (self.pos.y <= 0) {
+                self.pos.y = 0;
+            } else {
+                self.pos = v2.add(self.pos, Player.UP);
+            }
         } else if (rl.isKeyDown(self.keys.key_down)) {
+            print("[DOWN] player pos: {any}\n", .{self.pos});
             //print("key down pressed: {any}\n", .{self.keys.key_down});
-            self.pos = v2.add(self.pos, Player.DOWN);
+            if (self.pos.y >= SCREEN_HEIGHT - self.size.y) {
+                self.pos.y = SCREEN_HEIGHT - self.size.y;
+            } else {
+                self.pos = v2.add(self.pos, Player.DOWN);
+            }
         } else return;
     }
 };
@@ -63,7 +72,7 @@ const Player = struct {
 const Ball = struct {
     pos: v2 = BALL_START_POS,
     size: f32 = BALL_SIZE,
-    vel: v2 = v2.zero(),
+    vel: v2 = v2.init(BALL_VEL, 0),
     color: rl.Color = .black,
 
     fn draw(self: Ball) void {
@@ -125,7 +134,7 @@ const Game = struct {
 pub fn main() anyerror!void {
     print("pong time baby\n", .{});
 
-    rl.initWindow(WIDTH, HEIGHT, "pong");
+    rl.initWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "pong");
     defer rl.closeWindow();
 
     rl.setTargetFPS(60);
