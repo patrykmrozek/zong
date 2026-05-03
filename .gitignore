@@ -1,3 +1,6 @@
 .zig-cache/
 zig-out/
 *.o
+zig-pkg/
+*.exe
+swap-pane
