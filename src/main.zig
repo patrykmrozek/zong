@@ -73,6 +73,7 @@ const Player = struct {
 const Ball = struct {
     pos: v2 = BALL_START_POS,
     rad: f32 = BALL_RAD,
+    //need to rand
     vel: v2 = v2.init(BALL_VEL, -BALL_VEL),
     color: rl.Color = .black,
 
@@ -84,6 +85,7 @@ const Ball = struct {
         );
     }
 
+    //stole from acoustic tracer
     fn bounce(self: *Ball, normal: v2) void {
         const u = v2.scale(
             normal,
@@ -99,12 +101,12 @@ const Ball = struct {
         } else if (self.pos.y > SCREEN_HEIGHT - self.rad) {
             self.bounce(v2.init(0, -1));
         } else if (self.pos.x > SCREEN_WIDTH - self.rad) {
-            return .PLAYER_1_SCORE;
+            return .PLAYER_1_SCORED;
         } else if (self.pos.x < self.rad) {
-            return .PLAYER_2_SCORE;
+            return .PLAYER_2_SCORED;
         }
         self.pos = v2.add(self.pos, self.vel);
-        return .NO_SCORE;
+        return .NO_SCORED;
     }
 };
 
@@ -113,9 +115,9 @@ const Game = struct {
     ball: Ball,
 
     const Scored = enum {
-        NO_SCORE,
-        PLAYER_1_SCORE,
-        PLAYER_2_SCORE,
+        NO_SCORED,
+        PLAYER_1_SCORED,
+        PLAYER_2_SCORED,
     };
 
     fn init() Game {
@@ -136,6 +138,7 @@ const Game = struct {
         self.players[0].pos = PLAYER_1_START_POS;
         self.players[1].pos = PLAYER_2_START_POS;
         self.ball.pos = BALL_START_POS;
+        //need to sleep for a bit
     }
 
     //need to have self: *_ to be able to mutate
@@ -144,18 +147,18 @@ const Game = struct {
             player.update();
         }
         _ = switch (self.ball.update()) {
-            Game.Scored.PLAYER_1_SCORE => {
+            Game.Scored.PLAYER_1_SCORED => {
                 self.players[0].score += 1;
                 self.reset();
             },
-            Game.Scored.PLAYER_2_SCORE => {
+            Game.Scored.PLAYER_2_SCORED => {
                 self.players[1].score += 1;
                 self.reset();
             },
-            Game.Scored.NO_SCORE => undefined,
+            Game.Scored.NO_SCORED => undefined,
         };
         print(
-            "[SCORE] P1: {any} - P2: {any}\n",
+            "[SCORED] P1: {any} - P2: {any}\n",
             .{ self.players[0].score, self.players[1].score },
         );
     }
