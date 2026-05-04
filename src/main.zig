@@ -74,7 +74,7 @@ const Ball = struct {
     pos: v2 = BALL_START_POS,
     rad: f32 = BALL_RAD,
     //need to rand
-    vel: v2 = v2.init(BALL_VEL, -BALL_VEL),
+    vel: v2 = v2.init(BALL_VEL, 1),
     color: rl.Color = .black,
 
     fn draw(self: Ball) void {
@@ -120,6 +120,33 @@ const Game = struct {
         PLAYER_2_SCORED,
     };
 
+    fn resolveCollision(self: *Game, p: Player) void {
+        var b: *Ball = &self.ball;
+        //b vs p2 (r)
+        if (p.pos.x < SCREEN_WIDTH / 2) { // passes into p1 domain
+            if (b.pos.x - b.rad < p.pos.x + p.size.x) { // if it has reached the y plane of p1
+                if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
+                    (b.pos.y + b.rad) >= p.pos.y)
+                {
+                    print("[COLLISION] Player 1:\n", .{});
+                    print("Y plane check: {} > {}\n", .{ b.pos.x - b.rad, p.pos.x + p.size.y });
+                    b.bounce(v2.init(1, 0));
+                }
+            }
+        }
+        if (p.pos.x > SCREEN_WIDTH / 2) { // passes into p2 domain
+            if (b.pos.x + b.rad > p.pos.x) { // if it has reached the y plane of p2
+                if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
+                    (b.pos.y + b.rad) >= p.pos.y)
+                {
+                    print("[COLLISION] Player 2:\n", .{});
+                    print("Y plane check: {} > {}\n", .{ b.pos.x + b.rad, p.pos.x });
+                    b.bounce(v2.init(-1, 0));
+                }
+            }
+        }
+    }
+
     fn init() Game {
         print("Game Created!\n", .{});
         return Game{
@@ -143,7 +170,9 @@ const Game = struct {
 
     //need to have self: *_ to be able to mutate
     fn update(self: *Game) void {
+        //self.resolveCollision(self.players[1]);
         for (&self.players) |*player| {
+            self.resolveCollision(player.*); //deref player
             player.update();
         }
         _ = switch (self.ball.update()) {
@@ -157,10 +186,6 @@ const Game = struct {
             },
             Game.Scored.NO_SCORED => undefined,
         };
-        print(
-            "[SCORED] P1: {any} - P2: {any}\n",
-            .{ self.players[0].score, self.players[1].score },
-        );
     }
 
     fn render(self: Game) void {
