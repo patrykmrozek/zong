@@ -23,6 +23,8 @@ const PLAYER_2_START_POS: v2 = v2.init(
 const PLAYER_2_NORMAL: v2 = v2.init(-1, 0);
 const PLAYER_VEL: f32 = 7.5;
 
+const COLLISION_TIMER_MAX: u32 = 100;
+
 //ball
 const BALL_START_POS: v2 = v2.init(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 const BALL_RAD = 10;
@@ -116,6 +118,7 @@ const Ball = struct {
 const Game = struct {
     players: [2]Player,
     ball: Ball,
+    can_resolve_collisions: bool = true,
 
     const Scored = enum {
         NO_SCORED,
@@ -126,6 +129,21 @@ const Game = struct {
     fn resolveCollision(self: *Game, p: Player) void {
         var b: *Ball = &self.ball;
         var closest: v2 = b.pos;
+
+        //locally-scoped global variable - static
+        const CollisionTrack = struct {
+            var timer: u32 = 0;
+        };
+
+        if (!self.can_resolve_collisions) {
+            if (CollisionTrack.timer > COLLISION_TIMER_MAX) {
+                CollisionTrack.timer = 0;
+                self.can_resolve_collisions = true;
+            } else {
+                CollisionTrack.timer += 1;
+                return;
+            }
+        }
 
         if (b.pos.x < p.pos.x) {
             closest.x = p.pos.x;
@@ -144,35 +162,8 @@ const Game = struct {
 
         if (v2.distance(closest, b.pos) <= b.rad) {
             b.bounce(p.normal);
+            self.can_resolve_collisions = false;
         }
-
-        //dooky naive alg
-        //b vs p1 (l)
-        //if (p.pos.x < SCREEN_WIDTH / 2) { // passes into p1 domain
-        //    if (b.pos.x - b.rad < p.pos.x + p.size.x) { // if it has reached the y plane of p1
-        //        if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
-        //            (b.pos.y + b.rad) >= p.pos.y)
-        //        {
-        //            print("[COLLISION] Player 1:\n", .{});
-        //            print("Y plane check: {} < {}\n", .{ b.pos.x - b.rad, p.pos.x + p.size.y });
-        //            print("X plane above bottom: {} <= {}\n", .{ b.pos.y - b.rad, p.pos.y + p.size.y });
-        //            print("X plane below top: {} >= {}\n\n", .{ b.pos.y + b.rad, p.pos.y });
-        //            b.bounce(v2.init(1, 0));
-        //        }
-        //    }
-        //}
-        ////b vs p2 (r)
-        //if (p.pos.x > SCREEN_WIDTH / 2) { // passes into p2 domain
-        //    if (b.pos.x + b.rad > p.pos.x) { // if it has reached the y plane of p2
-        //        if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
-        //            (b.pos.y + b.rad) >= p.pos.y)
-        //        {
-        //            print("[COLLISION] Player 2:\n", .{});
-        //            print("Y plane check: {} > {}\n", .{ b.pos.x + b.rad, p.pos.x });
-        //            b.bounce(v2.init(-1, 0));
-        //        }
-        //    }
-        //}
     }
 
     fn init() Game {
@@ -205,6 +196,7 @@ const Game = struct {
             self.resolveCollision(player.*); //deref player
             player.update();
         }
+
         _ = switch (self.ball.update()) {
             Game.Scored.PLAYER_1_SCORED => {
                 self.players[0].score += 1;
@@ -233,6 +225,7 @@ pub fn main() anyerror!void {
     defer rl.closeWindow();
 
     rl.setTargetFPS(60);
+
     var game: Game = Game.init();
 
     while (!rl.windowShouldClose()) {
