@@ -1,3 +1,8 @@
+//TODO:
+//  random ball init dir
+//  pause between score
+//  render score
+
 const std = @import("std");
 const print = std.debug.print;
 const math = std.math;
@@ -23,12 +28,13 @@ const PLAYER_2_START_POS: v2 = v2.init(
 const PLAYER_2_NORMAL: v2 = v2.init(-1, 0);
 const PLAYER_VEL: f32 = 7.5;
 
-const COLLISION_TIMER_MAX: u32 = 100;
-
 //ball
 const BALL_START_POS: v2 = v2.init(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 const BALL_RAD = 10;
 const BALL_VEL: f32 = 6.5;
+
+//collision
+const COLLISION_TIMER_MAX: u32 = 100;
 
 const Player = struct {
     pos: v2,
@@ -56,7 +62,7 @@ const Player = struct {
 
     fn update(self: *Player) void {
         if (rl.isKeyDown(self.keys.key_up)) {
-            print("[UP] player pos: {any}\n", .{self.pos});
+            //print("[UP] player pos: {any}\n", .{self.pos});
             //print("key up pressed: {any}\n", .{self.keys.key_up});
             if (self.pos.y <= 0) {
                 self.pos.y = 0;
@@ -64,7 +70,7 @@ const Player = struct {
                 self.pos = v2.add(self.pos, Player.UP);
             }
         } else if (rl.isKeyDown(self.keys.key_down)) {
-            print("[DOWN] player pos: {any}\n", .{self.pos});
+            //print("[DOWN] player pos: {any}\n", .{self.pos});
             //print("key down pressed: {any}\n", .{self.keys.key_down});
             if (self.pos.y >= SCREEN_HEIGHT - self.size.y) {
                 self.pos.y = SCREEN_HEIGHT - self.size.y;
@@ -127,16 +133,14 @@ const Game = struct {
     };
 
     fn resolveCollision(self: *Game, p: Player) void {
-        var b: *Ball = &self.ball;
-        var closest: v2 = b.pos;
-
-        //locally-scoped global variable - static
+        //https://ziglang.org/documentation/master/#Locally-Scoped-Global-Variables
+        //pretty much static var
         const CollisionTrack = struct {
             var timer: u32 = 0;
         };
 
         if (!self.can_resolve_collisions) {
-            if (CollisionTrack.timer > COLLISION_TIMER_MAX) {
+            if (CollisionTrack.timer >= COLLISION_TIMER_MAX) {
                 CollisionTrack.timer = 0;
                 self.can_resolve_collisions = true;
             } else {
@@ -144,6 +148,9 @@ const Game = struct {
                 return;
             }
         }
+
+        var b: *Ball = &self.ball;
+        var closest: v2 = b.pos;
 
         if (b.pos.x < p.pos.x) {
             closest.x = p.pos.x;
@@ -156,9 +163,9 @@ const Game = struct {
             closest.y = p.pos.y + p.size.y;
         }
 
-        print("\nclosest: ({}, {})\n", .{ closest.x, closest.y });
-        print("b.pos: ({}, {})\n", .{ b.pos.x, b.pos.y });
-        print("dist: {}\n", .{v2.distance(closest, b.pos)});
+        //print("\nclosest: ({}, {})\n", .{ closest.x, closest.y });
+        //print("b.pos: ({}, {})\n", .{ b.pos.x, b.pos.y });
+        //print("dist: {}\n", .{v2.distance(closest, b.pos)});
 
         if (v2.distance(closest, b.pos) <= b.rad) {
             b.bounce(p.normal);
@@ -167,7 +174,7 @@ const Game = struct {
     }
 
     fn init() Game {
-        print("Game Created!\n", .{});
+        //print("Game Created!\n", .{});
         return Game{
             .players = .{ .{
                 .pos = PLAYER_1_START_POS,
