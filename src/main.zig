@@ -15,10 +15,12 @@ const PLAYER_1_START_POS: v2 = v2.init(
     SCREEN_WIDTH / 6 - (PLAYER_SIZE.x / 2),
     SCREEN_HEIGHT / 2 - (PLAYER_SIZE.y / 2),
 );
+const PLAYER_1_NORMAL: v2 = v2.init(1, 0);
 const PLAYER_2_START_POS: v2 = v2.init(
     5 * SCREEN_WIDTH / 6 - (PLAYER_SIZE.x / 2),
     SCREEN_HEIGHT / 2 - (PLAYER_SIZE.y / 2),
 );
+const PLAYER_2_NORMAL: v2 = v2.init(-1, 0);
 const PLAYER_VEL: f32 = 7.5;
 
 //ball
@@ -29,6 +31,7 @@ const BALL_VEL: f32 = 6.5;
 const Player = struct {
     pos: v2,
     size: v2 = PLAYER_SIZE,
+    normal: v2,
     score: u32 = 0,
     color: rl.Color = .black,
     keys: Keys,
@@ -122,29 +125,54 @@ const Game = struct {
 
     fn resolveCollision(self: *Game, p: Player) void {
         var b: *Ball = &self.ball;
+        var closest: v2 = b.pos;
+
+        if (b.pos.x < p.pos.x) {
+            closest.x = p.pos.x;
+        } else if (b.pos.x > p.pos.x + p.size.x) {
+            closest.x = p.pos.x + p.size.x;
+        }
+        if (b.pos.y < p.pos.y) {
+            closest.y = p.pos.y;
+        } else if (b.pos.y > p.pos.y + p.size.y) {
+            closest.y = p.pos.y + p.size.y;
+        }
+
+        print("\nclosest: ({}, {})\n", .{ closest.x, closest.y });
+        print("b.pos: ({}, {})\n", .{ b.pos.x, b.pos.y });
+        print("dist: {}\n", .{v2.distance(closest, b.pos)});
+
+        if (v2.distance(closest, b.pos) <= b.rad) {
+            b.bounce(p.normal);
+        }
+
+        //dooky naive alg
         //b vs p1 (l)
-        if (p.pos.x < SCREEN_WIDTH / 2) { // passes into p1 domain
-            if (b.pos.x - b.rad < p.pos.x + p.size.x) { // if it has reached the y plane of p1
-                if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
-                    (b.pos.y + b.rad) >= p.pos.y)
-                {
-                    print("[COLLISION] Player 1:\n", .{});
-                    print("Y plane check: {} > {}\n", .{ b.pos.x - b.rad, p.pos.x + p.size.y });
-                    b.bounce(v2.init(1, 0));
-                }
-            }
-        }
-        if (p.pos.x > SCREEN_WIDTH / 2) { // passes into p2 domain
-            if (b.pos.x + b.rad > p.pos.x) { // if it has reached the y plane of p2
-                if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
-                    (b.pos.y + b.rad) >= p.pos.y)
-                {
-                    print("[COLLISION] Player 2:\n", .{});
-                    print("Y plane check: {} > {}\n", .{ b.pos.x + b.rad, p.pos.x });
-                    b.bounce(v2.init(-1, 0));
-                }
-            }
-        }
+        //if (p.pos.x < SCREEN_WIDTH / 2) { // passes into p1 domain
+        //    if (b.pos.x - b.rad < p.pos.x + p.size.x) { // if it has reached the y plane of p1
+        //        if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
+        //            (b.pos.y + b.rad) >= p.pos.y)
+        //        {
+        //            print("[COLLISION] Player 1:\n", .{});
+        //            print("Y plane check: {} < {}\n", .{ b.pos.x - b.rad, p.pos.x + p.size.y });
+        //            print("X plane above bottom: {} <= {}\n", .{ b.pos.y - b.rad, p.pos.y + p.size.y });
+        //            print("X plane below top: {} >= {}\n\n", .{ b.pos.y + b.rad, p.pos.y });
+        //            b.bounce(v2.init(1, 0));
+        //        }
+        //    }
+        //}
+        ////b vs p2 (r)
+        //if (p.pos.x > SCREEN_WIDTH / 2) { // passes into p2 domain
+        //    if (b.pos.x + b.rad > p.pos.x) { // if it has reached the y plane of p2
+        //        if ((b.pos.y - b.rad <= p.pos.y + p.size.y) and
+        //            (b.pos.y + b.rad) >= p.pos.y)
+        //        {
+        //            print("[COLLISION] Player 2:\n", .{});
+        //            print("Y plane check: {} > {}\n", .{ b.pos.x + b.rad, p.pos.x });
+        //            b.bounce(v2.init(-1, 0));
+        //        }
+        //    }
+        //}
     }
 
     fn init() Game {
@@ -152,9 +180,11 @@ const Game = struct {
         return Game{
             .players = .{ .{
                 .pos = PLAYER_1_START_POS,
+                .normal = PLAYER_1_NORMAL,
                 .keys = .{ .key_up = Key.w, .key_down = Key.s },
             }, .{
                 .pos = PLAYER_2_START_POS,
+                .normal = PLAYER_2_NORMAL,
                 .keys = .{ .key_up = Key.up, .key_down = Key.down },
             } },
             .ball = .{},
